@@ -60,3 +60,5 @@ todo-app/
     npm install
     npm start
 
+### Detail Documentation:
+Detail Documentaion can be found here: https://drive.google.com/file/d/10tM45U3n7k_MiY4AJx43mQh9ZAv-6la4/view?usp=sharing
