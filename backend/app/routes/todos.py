@@ -1,37 +1,49 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 from app.models import TodoItem
-from app.routes.auth import get_current_user
 import uuid
+from dotenv import load_dotenv
+from app.utils.utils import MongoDB
+from bson import ObjectId
 
 router = APIRouter()
 
-# Mock database
-fake_db = []
+# Database configuration
+mongo = MongoDB()
+user_collection = mongo.get_collection("users")
+todo_collection = mongo.get_collection("todos")
 
 @router.get("/todos/", response_model=List[TodoItem])
 async def read_todos():
-    return fake_db
+    todos = await todo_collection.find().to_list(1000)
+    return todos
 
 @router.post("/todos/", response_model=TodoItem)
 async def create_todo(todo: TodoItem):
-    todo.id = str(uuid.uuid4())
-    fake_db.append(todo)
-    return todo
+    todo_data = todo.dict()
+    todo_data['id']= str(uuid.uuid4())
+    new_todo = await todo_collection.insert_one(todo_data)
+    created_todo = await todo_collection.find_one({"_id": new_todo.inserted_id})
+    return created_todo
 
-@router.put("/todos/{todo_id}", response_model=TodoItem)
+
+@router.put("/todos/{todo_id}")
 async def update_todo(todo_id: str, todo: TodoItem, ):
-    for t in fake_db:
-        if t.id == todo_id:
-            t.title = todo.title
-            t.summary = todo.summary
-            return t
-    raise HTTPException(status_code=404, detail="Todo item not found")
+    todo = todo.dict()
+    todo['id'] = todo_id
+    update_result = await todo_collection.update_one(
+        {"id": todo_id},
+        {"$set": todo}
+    )
+    if update_result.modified_count == 1:
+        updated_todo = await todo_collection.find_one({"id": todo_id})
+        return updated_todo
+    raise HTTPException(status_code=404, detail="Todo not found")
 
-@router.delete("/todos/{todo_id}", response_model=TodoItem)
+
+@router.delete("/todos/{todo_id}")
 async def delete_todo(todo_id: str, ):
-    for i, t in enumerate(fake_db):
-        if t.id == todo_id:
-            del fake_db[i]
-            return t
-    raise HTTPException(status_code=404, detail="Todo item not found")
+    delete_result = await todo_collection.delete_one({"id":todo_id})
+    if delete_result.deleted_count == 1:
+        return {"detail": "Todo deleted"}
+    raise HTTPException(status_code=404, detail="Todo not found")
