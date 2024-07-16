@@ -44,3 +44,19 @@ todo-app/
    git clone https://github.com/Prajwal247/TodoApp
    cd todo-app
 
+2. **Backend Setup:**
+    ```bash
+    cd backend
+    python -m venv venv       # Create virtual environment (optional)
+    source venv/bin/activate  # Activate virtual environment (Linux/Mac)
+    .\venv\Scripts\activate   # Activate virtual environment (Windows)
+    pip install -r requirements.txt
+
+    python main.py
+
+3. **Frontend Setup:**
+    ```
+    cd frontend
+    npm install
+    npm start
+
